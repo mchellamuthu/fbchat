@@ -34,13 +34,18 @@ class HomeController extends Controller
     public function users()
     {
         $user = Auth::user();
-        $inbox = $user->inbox()->groupBy('user_from')->orderBy('created_at','desc')->get();
+        $inbox = $user->inbox()->groupBy('user_from');
         $send = $user->sendItems()->groupBy('user_to');
-        // $messages = $inbox->union($send)->orderBy('created_at','desc')->get();
-        $users = $inbox->map(function($item){
+        $messages = $inbox->union($send)->orderBy('created_at','desc')->get();
+        $users = $messages->map(function($item){
             $user = Auth::user();
+          if ($item->user_from === $user->id) {
+            $id = $item->user_to;
+            $name = $item->receiver->name;
+          }else{
             $id = $item->sender->id;
             $name = $item->sender->name;
+          }
           $auser = User::where('id',$id)->first();
           $msg = $auser->inbox()->where('user_from',$user->id)->orderBy('created_at','desc')->get();
           if ($msg->count() > 0) {
